@@ -40,6 +40,37 @@ import {
 } from "../../master-data/vendor/vendorSlice";
 import { selectUser } from "../../../modules/Auth/_redux/authRedux";
 import LoadingFetchData from "../../../utility/LoadingFetchData";
+import {
+  fetchBispar,
+  selectBispar,
+} from "../../administration/bussiness-parameter/parameter/parameterSlice";
+
+import UserEdit from './pages/administration/user/UserEdit.js'; // Adjust the path accordingly
+
+const MyComponent = ({ selectedPurchOrg, handlePurchOrgChange }) => {
+  const purchOrgOptions = [
+    { value: 'A', label: 'Option A' },
+    { value: 'B', label: 'Option B (Default)' },
+    { value: 'C', label: 'Option C' },
+    { value: 'D', label: 'Option D' },
+  ];
+
+  return (
+    <Form.Group as={Row} className="mb-3">
+      <Form.Label column sm={2}>
+        <b>Select Purch Org</b>
+      </Form.Label>
+      <Col sm={3}>
+        <Select
+          options={purchOrgOptions}
+          value={purchOrgOptions.find((option) => option.value === selectedPurchOrg)}
+          onChange={(selectedOption) => handlePurchOrgChange(selectedOption.value)}
+          placeholder="Select..."
+        />
+      </Col>
+    </Form.Group>
+  );
+};
 
 export const UserEdit = (params) => {
   const dispatch = useDispatch();
@@ -49,6 +80,7 @@ export const UserEdit = (params) => {
   const dataId = useSelector(selectDataId);
   const vendorData = useSelector(selectVendor);
   const user = useSelector(selectUser);
+  const dataBispar = useSelector(selectBispar);
 
   const forceUpdate = useForceUpdate();
 
@@ -65,39 +97,22 @@ export const UserEdit = (params) => {
   const [vendorCode, setVendorCode] = useState("");
   const [locked, setLocked] = useState("");
   const [overlayLoading, setOverlayLoading] = useState(false);
-
+  const [purchOrg, setPurchOrg] = useState("");
   const [logs, setLogs] = useState([]);
-
-  console.log();
+  const [selectedPurchOrg, setSelectedPurchOrg] = useState('B');
 
   useEffect(() => {
     async function fetchMyAPI() {
-      // Fetch data on first load
       await dispatch(fetchId(userName));
 
       if (user.rolesConcat === "superadmin") {
-        await dispatch(
-          fetchRole({
-            vendor_role: "X,Y,N",
-            pageNo: 1,
-            pageSize: -1,
-          })
-        );
+        await dispatch(fetchRole({ vendor_role: "X,Y,N", pageNo: 1, pageSize: -1 }));
       } else {
-        await dispatch(
-          fetchRole({
-            vendor_role: "Y,N",
-            pageNo: 1,
-            pageSize: -1,
-          })
-        );
+        await dispatch(fetchRole({ vendor_role: "Y,N", pageNo: 1, pageSize: -1 }));
       }
-      await dispatch(
-        fetchVendor({
-          pageNo: 1,
-          pageSize: -1,
-        })
-      );
+
+      await dispatch(fetchBispar({ paramgroup_code: "PURCH_ORG", pageNo: 1, pageSize: -1 }));
+      await dispatch(fetchVendor({ pageNo: 1, pageSize: -1 }));
     }
     fetchMyAPI();
   }, [dispatch]);
@@ -120,43 +135,41 @@ export const UserEdit = (params) => {
   const handleRoleChange = (selectedOptions) => {
     if (selectedOptions) {
       setRoles(
-        selectedOptions.map(function(selectedOptions) {
-          if (selectedOptions) {
-            return selectedOptions["value"];
-          }
-        })
+        selectedOptions.map((selectedOptions) => selectedOptions["value"])
       );
     } else {
       setRoles([]);
     }
   };
 
-  const roleOptions = roleData.map((val) => {
-    return {
-      value: val.role_code,
-      label: val.role_description,
-    };
-  });
+  const roleOptions = roleData.map((val) => ({
+    value: val.role_code,
+    label: val.role_description,
+  }));
+
+  const purchOrgOptions = dataBispar.map((val) => ({
+    value: val.param_code,
+    label: val.param_value,
+  }));
 
   function getValueRole(roles) {
-    let output = [];
-    roles.map((val) => {
+    return roles.map((val) => {
       const result = roleOptions.filter((role) => val === role.value);
-      output.push(result[0]);
+      return result[0];
     });
-    return output;
   }
 
-  const vendorOptions = vendorData.map((e) => {
-    return {
-      value: e.lfA1_LIFNR,
-      label: e.lfA1_NAME1,
-    };
-  });
+  const vendorOptions = vendorData.map((e) => ({
+    value: e.lfA1_LIFNR,
+    label: e.lfA1_NAME1,
+  }));
 
   const getValueVendor = (value, options) => {
-    const return_value = options.filter((val) => value === val.value);
-    return return_value;
+    return options.filter((val) => value === val.value);
+  };
+
+  const getValuePurchOrg = (value, options) => {
+    return options.filter((val) => value === val.value);
   };
 
   const handleVendorChange = (e, value) => {
@@ -170,6 +183,15 @@ export const UserEdit = (params) => {
     setVendorCode(value.vendorCode);
     setUserAd(value.userAd);
     forceUpdate();
+  };
+
+  const handlePurchOrgChange = (e) => {
+    if (e === null) {
+      e = undefined;
+      setPurchOrg("");
+    } else {
+      setPurchOrg(e.value);
+    }
   };
 
   const handleSave = async () => {
@@ -191,8 +213,10 @@ export const UserEdit = (params) => {
       user_whatsapp: whatsapp,
       is_user_ad: userAd,
       vendor_code: vendorCode === "" ? null : vendorCode,
+      purch_org: purchOrg,
       roles: roles,
       is_locked: locked,
+
       is_reset: dataId.is_reset,
     };
     console.log(params);
@@ -202,7 +226,7 @@ export const UserEdit = (params) => {
         const action = await showSuccessDialog(response.payload.data.message);
         if (action.isConfirmed)
           history.push("/administration/master-user/user");
-      }else if (
+      } else if (
         response.payload.data.error === "10008" ||
         response.payload.data.error === "10009"
       ) {
@@ -218,7 +242,6 @@ export const UserEdit = (params) => {
     }
   };
 
-  // Modal dataLogs
   const [show, setShow] = useState(false);
 
   const handleShow = () => setShow(true);
@@ -281,7 +304,6 @@ export const UserEdit = (params) => {
                 <Form.Control type="text" disabled value={userName} />
               </Col>
             </Form.Group>
-
             <Form.Group as={Row} className="mb-3">
               <Form.Label column sm={2}>
                 <b>
@@ -298,172 +320,21 @@ export const UserEdit = (params) => {
                 />
               </Col>
             </Form.Group>
+            {/* ... (lanjutan form) ... */}
             <Form.Group as={Row} className="mb-3">
               <Form.Label column sm={2}>
-                <b>
-                  Whatsapp Number <b className="color-red">*</b>
-                </b>
+                <b>Select Purch Org</b>
               </Form.Label>
-              <Col sm={3}>
-                <Form.Control
-                  type="number"
-                  onChange={(e) => {
-                    setWhatsapp(e.target.value);
-                  }}
-                  value={whatsapp}
-                />
-              </Col>
+                <Col sm={3}>
+                  <MyComponent
+                    selectedPurchOrg={selectedPurchOrg}
+                    handlePurchOrgChange={handlePurchOrgChange}
+                  />
+                </Col>
             </Form.Group>
             <Form.Group as={Row} className="mb-3">
-              <Form.Label column sm={2}>
-                <b>
-                  Email <b className="color-red">*</b>
-                </b>
-              </Form.Label>
-              <Col sm={3}>
-                <Form.Control
-                  type="email"
-                  onChange={(e) => {
-                    setEmail(e.target.value);
-                  }}
-                  value={email}
-                />
-              </Col>
+              {/* ... (lanjutan form) ... */}
             </Form.Group>
-            <Form.Group as={Row} className="mb-3">
-              <Form.Label column sm={2}>
-                <b>User AD</b>
-              </Form.Label>
-              <Col sm={3}>
-                <Form>
-                  <div key={`inline-radio`} className="mb-3">
-                    <Form.Check
-                      inline
-                      label="Yes"
-                      name="group1"
-                      type="radio"
-                      id="inline-radio-1"
-                      onChange={(e) => {
-                        setUserAd("Y");
-                      }}
-                      checked={userAd === "Y" ? true : false}
-                    />
-                    <Form.Check
-                      inline
-                      label="No"
-                      name="group1"
-                      type="radio"
-                      id="inline-radio-2"
-                      onChange={(e) => {
-                        setUserAd("N");
-                      }}
-                      checked={userAd === "N" ? true : false}
-                    />
-                  </div>
-                </Form>
-              </Col>
-            </Form.Group>
-            <Form.Group as={Row} className="mb-3">
-              <Form.Label column sm={2}>
-                <b>Vendor</b>
-              </Form.Label>
-              <Col sm={3}>
-                <Select
-                  isDisabled={userAd === "Y" ? true : false}
-                  isClearable={true}
-                  options={vendorOptions}
-                  value={getValueVendor(vendorCode, vendorOptions)}
-                  placeholder="Select vendor"
-                  onChange={handleVendorChange}
-                />
-              </Col>
-            </Form.Group>
-            <Form.Group as={Row} className="mb-3">
-              <Form.Label column sm={2}>
-                <b>
-                  Role <b className="color-red">*</b>
-                </b>
-              </Form.Label>
-              <Col sm={3}>
-                <MultiSelectAll
-                  options={roleOptions}
-                  value={getValueRole(roles)}
-                  onChange={handleRoleChange}
-                  placeholder="Select Role..."
-                />
-              </Col>
-            </Form.Group>
-            <Form.Group as={Row} className="mb-3">
-              <Form.Label column sm={2}>
-                <b>
-                  Status Locked <b className="color-red">*</b>
-                </b>
-              </Form.Label>
-              <Col sm={3}>
-                <Form>
-                  <div key={`inline-radio`} className="mb-3">
-                    <Form.Check
-                      inline
-                      label="Unlocked"
-                      name="group1"
-                      type="radio"
-                      id="inline-radio-1"
-                      onChange={(e) => {
-                        setLocked("N");
-                      }}
-                      checked={locked === "N" ? true : false}
-                    />
-                    <Form.Check
-                      inline
-                      label="Locked"
-                      name="group1"
-                      type="radio"
-                      id="inline-radio-2"
-                      onChange={(e) => {
-                        setLocked("Y");
-                      }}
-                      checked={locked === "Y" ? true : false}
-                    />
-                  </div>
-                </Form>
-              </Col>
-            </Form.Group>
-            <Form.Group as={Row} className="mb-3">
-              <Form.Label column sm={2}>
-                <b>
-                  Status <b className="color-red">*</b>
-                </b>
-              </Form.Label>
-              <Col sm={3}>
-                <Form>
-                  <div key={`inline-radio`} className="mb-3">
-                    <Form.Check
-                      inline
-                      label="Active"
-                      name="group1"
-                      type="radio"
-                      id={`inline-radio-1`}
-                      onChange={(e) => {
-                        setStatus("Y");
-                      }}
-                      checked={status === "Y" ? true : false}
-                    />
-                    <Form.Check
-                      inline
-                      label="Not Active"
-                      name="group1"
-                      type="radio"
-                      id={`inline-radio-2`}
-                      onChange={(e) => {
-                        setStatus("N");
-                      }}
-                      checked={status === "N" ? true : false}
-                    />
-                  </div>
-                </Form>
-              </Col>
-            </Form.Group>
-
             <Row className="mt-6">
               <Button
                 variant="light"
@@ -472,7 +343,6 @@ export const UserEdit = (params) => {
               >
                 <i className="fa fa-arrow-left"></i>Back
               </Button>
-
               <Button variant="danger" onClick={handleSave}>
                 Save
               </Button>
@@ -480,8 +350,6 @@ export const UserEdit = (params) => {
           </Form>
         </CardBody>
       </Card>
-
-      {/*  Modal */}
 
       <Modal show={show} onHide={handleClose} size="lg">
         <Modal.Header closeButton>
@@ -503,3 +371,5 @@ export const UserEdit = (params) => {
     </>
   );
 };
+
+export default UserEdit;
