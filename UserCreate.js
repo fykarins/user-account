@@ -183,10 +183,10 @@ export const UserCreate = () => {
   const handleSave = async () => {
     // Validation
     if (username === "") {
-      return showErrorDialog("Please Input Username frist");
+      return showErrorDialog("Please Input Username first");
     }
     if (fullname === "") {
-      return showErrorDialog("Please Input fullname frist");
+      return showErrorDialog("Please Input fullname first");
     }
     if (posthandphone.substring(2, 3) === "0") {
       return showErrorDialog("Please dont number 0 after +62");
@@ -381,20 +381,20 @@ export const UserCreate = () => {
             </Col>
           </Form.Group>
           <Form.Group as={Row} className="mb-3">
-            <Form.Label column sm={2}>
-              <b>Vendor</b>
-            </Form.Label>
-            <Col sm={3}>
-              <Select
-                isDisabled={userAd === "Y" ? true : false}
-                isClearable={true}
-                options={vendorOptions}
-                value={getValueVendor(vendorCode, vendorOptions)}
-                placeholder="Select vendor"
-                onChange={handleVendorChange}
-              />
-            </Col>
-          </Form.Group>
+  <Form.Label column sm={2}>
+    <b>Vendor</b>
+  </Form.Label>
+  <Col sm={3}>
+    <Select
+      isDisabled={userAd === "Y" || !!vendorCode}  
+      isClearable={true}
+      options={vendorOptions}
+      value={getValueVendor(vendorCode, vendorOptions)}
+      placeholder="Select vendor"
+      onChange={handleVendorChange}
+    />
+  </Col>
+</Form.Group>
           <Form.Group as={Row} className="mb-3">
             <Form.Label column sm={2}>
               <b>
@@ -403,6 +403,8 @@ export const UserCreate = () => {
             </Form.Label>
             <Col sm={3}>
               <MultiSelectAll
+                isDisabled={userAd === "N" ? true : false}
+                isClearable={true}
                 options={roleOptions}
                 value={getValueRole(roles)}
                 onChange={handleRoleChange}
@@ -411,21 +413,20 @@ export const UserCreate = () => {
             </Col>
           </Form.Group>
           <Form.Group as={Row} className="mb-3">
-            <Form.Label column sm={2}>
-              <b>
-                Purch Org
-              </b>
-            </Form.Label>
-            <Col sm={3}>
-              <Select
-                isClearable={true}
-                options={purchOrgOptions}
-                value={getValuePurchOrg(purchOrg, purchOrgOptions)}
-                onChange={handlePurchOrgChange}
-                placeholder="Select..."
-              />
-            </Col>
-          </Form.Group>
+  <Form.Label column sm={2}>
+    <b>Purch Org</b>
+  </Form.Label>
+  <Col sm={3}>
+    <Select
+      isDisabled={userAd === "N" && !!vendorCode}  
+      isClearable={true}
+      options={purchOrgOptions}
+      value={getValuePurchOrg(purchOrg, purchOrgOptions)}
+      onChange={handlePurchOrgChange}
+      placeholder="Select..."
+    />
+  </Col>
+</Form.Group>
           <Form.Group as={Row} className="mb-3">
             <Form.Label column sm={2}>
               <b>Status Locked</b>
