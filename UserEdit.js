@@ -74,14 +74,12 @@ export const UserEdit = (params) => {
 
   const [logs, setLogs] = useState([]);
 
-  const purchOrgOptions = [
-    { value: "MMKSI-SP", label: "MMKSI-SP" },
-    { value: "MMKSI-GA", label: "MMKSI-GA" },
-    { value: "MMKSI-Marketing", label: "MMKSI-Marketing" },
-    { value: "MMKSI-Logistik", label: "MMKSI-Logistik" },
-  ];
-  console.log("purchOrgOptions:", purchOrgOptions);
-  console.log("purchOrg:", purchOrg);
+  // const purchOrgOptions = [
+  //   { value: "MMKSI-SP", label: "MMKSI-SP" },
+  //   { value: "MMKSI-GA", label: "MMKSI-GA" },
+  //   { value: "MMKSI-Marketing", label: "MMKSI-Marketing" },
+  //   { value: "MMKSI-Logistik", label: "MMKSI-Logistik" },
+  // ];
 
   useEffect(() => {
     async function fetchMyAPI() {
@@ -111,6 +109,14 @@ export const UserEdit = (params) => {
           pageSize: -1,
         })
       );
+      
+      await dispatch(
+        fetchBispar({
+            paramgroup_code: "PURCH_ORG",
+            pageNo: 1,
+            pageSize: -1,
+        })
+      );
     }
     fetchMyAPI();
   }, [dispatch]);
@@ -125,6 +131,7 @@ export const UserEdit = (params) => {
       setUserAd(dataId.is_user_ad);
       setVendorCode(dataId.vendor_code);
       setRoles(dataId.roles);
+      setPurchOrg(dataId.purch_org);
       setLocked(dataId.is_locked);
       setLogs(dataId.logs);
     }
@@ -150,6 +157,13 @@ export const UserEdit = (params) => {
       label: val.role_description,
     };
   });
+
+  const purchOrgOptions = dataBispar.map((val) => {
+    return {
+      value: val.param_code,
+      label: val.param_value,
+    };
+});
 
   function getValueRole(roles) {
     let output = [];
@@ -177,6 +191,10 @@ export const UserEdit = (params) => {
     return return_value;
   };
 
+  const getPurchOrgPlaceholder = (value) => {
+    return value;
+  };
+  
   const handleVendorChange = (e, value) => {
     if (e === null) {
       value.vendorCode = "";
@@ -190,9 +208,14 @@ export const UserEdit = (params) => {
     forceUpdate();
   };
 
-  const handlePurchOrgChange = (selectedOption) => {
-    setPurchOrg(selectedOption ? selectedOption.value : "");
-  };  
+  const handlePurchOrgChange = (e, value) => {
+    if (e === null) {
+      value.purchOrg = "";
+    } else {
+      value.purchOrg = e.value;
+    }
+    setPurchOrg(value.purchOrg);
+  };
 
   const handleSave = async () => {
     if (whatsapp.substring(0, 2) !== "62") {
@@ -213,6 +236,7 @@ export const UserEdit = (params) => {
       user_whatsapp: whatsapp,
       is_user_ad: userAd,
       vendor_code: vendorCode === "" ? null : vendorCode,
+      purch_org: purchOrg,
       roles: roles,
       is_locked: locked,
       is_reset: dataId.is_reset,
@@ -424,9 +448,10 @@ export const UserEdit = (params) => {
                   isDisabled={userAd === "N" && !!vendorCode}   
                   isClearable={true}
                   options={purchOrgOptions}
-                  value={getValuePurchOrg (purchOrg|| "MMKSI-SP", purchOrgOptions)}
+                  value={getValuePurchOrg(purchOrg, purchOrgOptions)}
+                  //value={getPurchOrgPlaceholder(purchOrg)}
                   onChange={handlePurchOrgChange}
-                  placeholder="Select Purch Org" 
+                  placeholder={getPurchOrgPlaceholder(purchOrg)} 
                 />
               </Col>
             </Form.Group>
