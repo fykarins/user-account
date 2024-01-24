@@ -381,20 +381,20 @@ export const UserCreate = () => {
             </Col>
           </Form.Group>
           <Form.Group as={Row} className="mb-3">
-  <Form.Label column sm={2}>
-    <b>Vendor</b>
-  </Form.Label>
-  <Col sm={3}>
-    <Select
-      isDisabled={userAd === "Y" || !!vendorCode}  
-      isClearable={true}
-      options={vendorOptions}
-      value={getValueVendor(vendorCode, vendorOptions)}
-      placeholder="Select vendor"
-      onChange={handleVendorChange}
-    />
-  </Col>
-</Form.Group>
+            <Form.Label column sm={2}>
+              <b>Vendor</b>
+            </Form.Label>
+            <Col sm={3}>
+              <Select
+                isDisabled={userAd === "Y" || !!vendorCode}  
+                isClearable={true}
+                options={vendorOptions}
+                value={getValueVendor(vendorCode, vendorOptions)}
+                placeholder="Select vendor"
+                onChange={handleVendorChange}
+              />
+            </Col>
+          </Form.Group>
           <Form.Group as={Row} className="mb-3">
             <Form.Label column sm={2}>
               <b>
@@ -413,20 +413,20 @@ export const UserCreate = () => {
             </Col>
           </Form.Group>
           <Form.Group as={Row} className="mb-3">
-  <Form.Label column sm={2}>
-    <b>Purch Org</b>
-  </Form.Label>
-  <Col sm={3}>
-    <Select
-      isDisabled={userAd === "N" && !!vendorCode}  
-      isClearable={true}
-      options={purchOrgOptions}
-      value={getValuePurchOrg(purchOrg, purchOrgOptions)}
-      onChange={handlePurchOrgChange}
-      placeholder="Select..."
-    />
-  </Col>
-</Form.Group>
+            <Form.Label column sm={2}>
+              <b>Purch Org</b>
+            </Form.Label>
+            <Col sm={3}>
+              <Select
+                isDisabled={userAd === "N" && !!vendorCode}  
+                isClearable={true}
+                options={purchOrgOptions}
+                value={getValuePurchOrg(purchOrg, purchOrgOptions)}
+                onChange={handlePurchOrgChange}
+                placeholder="Select..."
+              />
+            </Col>
+          </Form.Group>
           <Form.Group as={Row} className="mb-3">
             <Form.Label column sm={2}>
               <b>Status Locked</b>
